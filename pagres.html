@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responder Mensagem</title>
+    <style>
+        .checkmark {
+            position: relative;
+            display: block;
+            width: 25px;
+            height: 25px;
+            background-color: #eee;
+            border-radius: 50%;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .checkbox:checked + .checkmark:after {
+            display: block;
+        }
+
+        .checkbox:checked + .checkmark:after {
+            left: 9px;
+            top: 5px;
+            width: 6px;
+            height: 12px;
+            border: solid #5cb85c;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+    </style>
+</head>
+<body>
+    <h2>Responder Mensagem</h2>
+
+    <h3>Responder Mensagem</h3>
+    <form id="replyMessageForm">
+        <label for="name">Nome:</label>
+        <input type="text" id="name" name="name" readonly><br><br>
+
+        <label for="email">E-mail:</label>
+        <input type="text" id="email" name="email" readonly><br><br>
+
+        <label for="subject">Assunto:</label>
+        <input type="text" id="subject" name="subject" readonly><br><br>
+
+        <label for="message">Mensagem:</label>
+        <textarea id="message" name="message" rows="4" readonly></textarea><br><br>
+
+        <label for="response">Resposta:</label>
+        <textarea id="response" name="response" rows="4" required></textarea><br><br>
+
+        <label for="finished">Finalizado:</label>
+        <input type="checkbox" id="finished" name="finished" class="checkbox"><span class="checkmark"></span><br><br>
+
+        <input type="submit" value="Enviar Resposta">
+    </form>
+
+    <script>
+        function loadMessages() {
+            fetch("https://parseapi.back4app.com/classes/MyCustomClass", {
+                method: "GET",
+                headers: {
+                    "X-Parse-Application-Id": "YLa4ORewlPzxGyb8GSYmNdXSSZszGsOCX9cPYL29",
+                    "X-Parse-REST-API-Key": "WPhzWSqHK5tiVoqnZ3yfsnUcwYLrJ9kr9BJci75A"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.results.length > 0) {
+                    var message = data.results[0]; 
+                    document.getElementById("name").value = message.name;
+                    document.getElementById("email").value = message.email;
+                    document.getElementById("subject").value = message.subject;
+                    document.getElementById("message").value = message.message;
+
+                    if (message.finished) {
+                        document.getElementById("finished").checked = message.finished;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao obter mensagens:", error);
+                alert("Erro ao obter mensagens. Por favor, tente novamente.");
+            });
+        }
+
+        window.onload = loadMessages;
+
+        document.getElementById("replyMessageForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            var formData = new FormData(this);
+            var object = {};
+            formData.forEach(function(value, key){
+                if (key === "finished") {
+                    object[key] = value === "on";
+                } else {
+                    object[key] = value;
+                }
+            });
+
+            var jsonData = JSON.stringify(object);
+
+            fetch("https://parseapi.back4app.com/classes/MyCustomClass", {
+                method: "POST",
+                headers: {
+                    "X-Parse-Application-Id": "YLa4ORewlPzxGyb8GSYmNdXSSZszGsOCX9cPYL29",
+                    "X-Parse-REST-API-Key": "WPhzWSqHK5tiVoqnZ3yfsnUcwYLrJ9kr9BJci75A",
+                    "Content-Type": "application/json"
+                },
+                body: jsonData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Resposta do servidor:", data);
+                alert("Resposta enviada com sucesso!");
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error("Erro ao enviar resposta:", error);
+                alert("Erro ao enviar resposta. Por favor, tente novamente.");
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
